@@ -1,0 +1,2 @@
+[prod]
+prod-server ansible_host={{ PROD_SERVER_IP }} ansible_user={{ PROD_SSH_USER }} ansible_ssh_common_args='-o StrictHostKeyChecking=no'

@@ -1,0 +1,62 @@
+- name: Install Docker on Ubuntu
+  become: true
+  apt:
+    name: docker.io
+    state: present
+    update_cache: yes
+
+- name: Enable and start Docker service
+  become: true
+  systemd:
+    name: docker
+    enabled: yes
+    state: started
+
+- name: Ensure Docker Compose is installed
+  ansible.builtin.shell: |
+    curl -sSL https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+    chmod +x /usr/local/bin/docker-compose
+  args:
+    creates: /usr/local/bin/docker-compose
+
+- name: Create app directory if not exists
+  ansible.builtin.file:
+    path: "{{ app_path }}"
+    state: directory
+    mode: '0755'
+
+- name: Copy docker-compose project files (excluding top-level folder)
+  ansible.builtin.synchronize:
+    src: "{{ lookup('env', 'GITHUB_WORKSPACE') }}/"
+    dest: "{{ app_path }}/"
+    recursive: yes
+    delete: no
+    rsync_opts:
+      - "--exclude=.git"
+
+- name: Create .env file from template
+  ansible.builtin.template:
+    src: ".env.j2"
+    dest: "{{ app_path }}/.env"
+    mode: "0644"
+
+- name: Log in to GHCR
+  community.docker.docker_login:
+    registry_url: ghcr.io
+    username: "{{ github_username }}"
+    password: "{{ github_token }}"
+
+- name: Pull the latest image from GHCR
+  community.docker.docker_image:
+    name: "{{ ghcr_image }}"
+    source: pull
+
+- name: Start db container if not already running
+  ansible.builtin.shell: docker-compose up -d db
+  args:
+    chdir: "{{ docker_compose_path }}"
+
+- name: Rebuild and start only web container with updated image (zero downtime)
+  ansible.builtin.shell: docker-compose up -d --no-deps --build web
+  args:
+    chdir: "{{ docker_compose_path }}"

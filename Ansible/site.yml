@@ -1,0 +1,20 @@
+- name: Build and push Docker image to GHCR
+  hosts: localhost
+  vars:
+    github_username: "{{ lookup('env', 'GH_USERNAME') }}"
+    github_token: "{{ lookup('env', 'GITHUB_TOKEN') }}"
+  roles:
+    - build_push
+
+- name: Deploy Flask container to remote server
+  hosts: all
+  become: true
+  vars:
+    github_username: "{{ lookup('env', 'GH_USERNAME') }}"
+    db_host: "{{ lookup('env', 'DB_HOST') }}"
+    db_port: "{{ lookup('env', 'DB_PORT') }}"
+    db_name: "{{ lookup('env', 'DB_NAME') }}"
+    db_user: "{{ lookup('env', 'DB_USER') }}"
+    db_password: "{{ lookup('env', 'DB_PASSWORD') }}"
+  roles:
+    - deploy

@@ -1,0 +1,2 @@
+[test]
+test-server ansible_host={{ TEST_SERVER_IP }} ansible_user={{ TEST_SSH_USER }} ansible_ssh_common_args='-o StrictHostKeyChecking=no'

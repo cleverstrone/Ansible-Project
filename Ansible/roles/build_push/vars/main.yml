@@ -1,0 +1,3 @@
+image_name: "ghcr.io/{{ github_username }}/ghcr-repository/flask-app:latest"
+github_username: "{{ lookup('env', 'GH_USERNAME') | default('your_user_here') }}"
+github_token: "{{ lookup('env', 'GH_TOKEN') | default('your_token_here') }}"

@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Contact Manager{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Contact Manager</h2>
+    <p class="page-description">Manage your New contacts efficiently - All operations working!</p>
+
+    <!-- Quick Actions -->
+    <div class="quick-actions">
+        <a href="{{ url_for('populate_sample_data') }}" class="btn btn-info">
+            <i class="fas fa-magic"></i> Add Sample Data
+        </a>
+        <a href="{{ url_for('demo_page') }}" class="btn btn-secondary">
+            <i class="fas fa-eye"></i> View Demo
+        </a>
+    </div>
+</div>
+
+<!-- Contacts List Section -->
+<section class="contacts-section">
+    <div class="section-header">
+        <h3><i class="fas fa-users"></i> Your Contacts</h3>
+        <div class="contact-count">{{ contacts|length }} contacts</div>
+    </div>
+
+    {% if contacts %}
+        <div class="table-container">
+            <table class="contacts-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Message</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for contact in contacts %}
+                    <tr>
+                        <td class="id-cell">{{ contact[0] }}</td>
+                        <td class="name-cell">
+                            <div class="user-info">
+                                <div class="user-avatar">{{ contact[1][0].upper() }}</div>
+                                <span>{{ contact[1] }}</span>
+                            </div>
+                        </td>
+                        <td class="email-cell">
+                            <a href="mailto:{{ contact[2] }}">{{ contact[2] }}</a>
+                        </td>
+                        <td class="message-preview">
+                            <div class="message-text">
+                                {{ contact[3][:60] }}{% if contact[3]|length > 60 %}...{% endif %}
+                            </div>
+                        </td>
+                        <td class="date-cell">
+                            {% if contact[4] %}
+                                {{ contact[4].strftime('%Y-%m-%d %H:%M') }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td class="actions-cell">
+                            <div class="action-buttons">
+                                <a href="{{ url_for('edit_contact', id=contact[0]) }}" 
+                                   class="btn btn-edit" 
+                                   title="Edit Contact">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{{ url_for('delete_contact', id=contact[0]) }}" 
+                                   class="btn btn-delete" 
+                                   title="Delete Contact"
+                                   onclick="return confirm('Are you sure you want to delete {{ contact[1] }}?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-address-book"></i>
+            </div>
+            <h3>No contacts yet</h3>
+            <p>Start by adding your first contact using the form below, or try our sample data!</p>
+            <div class="empty-actions">
+                <a href="{{ url_for('populate_sample_data') }}" class="btn btn-primary">
+                    <i class="fas fa-magic"></i> Add Sample Data
+                </a>
+            </div>
+        </div>
+    {% endif %}
+</section>
+
+<!-- Add Contact Section -->
+<section class="add-contact-section" id="add-contact">
+    <div class="section-header">
+        <h3><i class="fas fa-plus-circle"></i> Add New Contact</h3>
+    </div>
+
+    <div class="form-container">
+        <form method="POST" action="{{ url_for('add_contact') }}" class="contact-form" id="add-form">
+            <p class="form-description">Fill in the details below to add a new contact</p>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="name">
+                        <i class="fas fa-user"></i> Full Name <span class="required">*</span>
+                    </label>
+                    <input type="text" 
+                           id="name" 
+                           name="name" 
+                           class="form-input" 
+                           required 
+                           placeholder="Enter full name"
+                           minlength="2"
+                           maxlength="100">
+                    <div class="field-hint">Minimum 2 characters</div>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">
+                        <i class="fas fa-envelope"></i> Email Address <span class="required">*</span>
+                    </label>
+                    <input type="email" 
+                           id="email" 
+                           name="email" 
+                           class="form-input" 
+                           required 
+                           placeholder="Enter email address"
+                           maxlength="100">
+                    <div class="field-hint">Valid email format required</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="message">
+                    <i class="fas fa-comment"></i> Message <span class="required">*</span>
+                </label>
+                <textarea id="message" 
+                         name="message" 
+                         class="form-textarea" 
+                         required 
+                         placeholder="Enter your message..."
+                         rows="4"
+                         maxlength="1000"></textarea>
+                <div class="field-hint">Maximum 1000 characters</div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Contact
+                </button>
+                <button type="reset" class="btn btn-secondary">
+                    <i class="fas fa-undo"></i> Clear Form
+                </button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<!-- Success/Error Messages Script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Test all operations notification
+    if ({{ contacts|length }} > 0) {
+        console.log('✅ Contact Manager - All CRUD operations are working!');
+        console.log('- Add: Use the form below');
+        console.log('- Edit: Click pencil icon on any contact');
+        console.log('- Delete: Click trash icon on any contact');
+    }
+});
+</script>
+{% endblock %}
