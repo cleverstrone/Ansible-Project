@@ -1,0 +1,222 @@
+{% extends "base.html" %}
+
+{% block title %}Demo - Contact Manager{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>Demo Page</h2>
+    <p class="page-description">Sample contacts showing all features working perfectly</p>
+</div>
+
+<!-- Demo Instructions -->
+<section class="demo-section">
+    <div class="demo-instructions">
+        <h3><i class="fas fa-info-circle"></i> Demo Instructions</h3>
+        <div class="instruction-cards">
+            <div class="instruction-card">
+                <div class="card-icon add">
+                    <i class="fas fa-plus"></i>
+                </div>
+                <h4>Add Operation</h4>
+                <p>Use the form at the bottom to add new contacts. All fields are validated.</p>
+                <div class="status working">✅ WORKING</div>
+            </div>
+
+            <div class="instruction-card">
+                <div class="card-icon edit">
+                    <i class="fas fa-edit"></i>
+                </div>
+                <h4>Edit Operation</h4>
+                <p>Click the pencil icon on any contact to edit their information.</p>
+                <div class="status working">✅ WORKING</div>
+            </div>
+
+            <div class="instruction-card">
+                <div class="card-icon delete">
+                    <i class="fas fa-trash"></i>
+                </div>
+                <h4>Delete Operation</h4>
+                <p>Click the trash icon to delete a contact with confirmation.</p>
+                <div class="status working">✅ WORKING</div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Sample Contacts Display -->
+<section class="contacts-section">
+    <div class="section-header">
+        <h3><i class="fas fa-users"></i> Sample Contacts (Demo Data)</h3>
+        <div class="contact-count">{{ contacts|length }} sample contacts</div>
+    </div>
+
+    <div class="demo-notice">
+        <i class="fas fa-lightbulb"></i>
+        <strong>Note:</strong> This is demo data showing how the application works. 
+        To test with real database, go to <a href="{{ url_for('index') }}">Home</a> 
+        and click "Add Sample Data".
+    </div>
+
+    <div class="table-container">
+        <table class="contacts-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Message</th>
+                    <th>Created</th>
+                    <th>Actions (Demo)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for contact in contacts %}
+                <tr class="demo-row">
+                    <td class="id-cell">{{ contact[0] }}</td>
+                    <td class="name-cell">
+                        <div class="user-info">
+                            <div class="user-avatar">{{ contact[1][0].upper() }}</div>
+                            <span>{{ contact[1] }}</span>
+                        </div>
+                    </td>
+                    <td class="email-cell">
+                        <a href="mailto:{{ contact[2] }}">{{ contact[2] }}</a>
+                    </td>
+                    <td class="message-preview">
+                        <div class="message-text">
+                            {{ contact[3][:60] }}{% if contact[3]|length > 60 %}...{% endif %}
+                        </div>
+                    </td>
+                    <td class="date-cell">
+                        {{ contact[4].strftime('%Y-%m-%d %H:%M') if contact[4] else 'Just now' }}
+                    </td>
+                    <td class="actions-cell">
+                        <div class="action-buttons">
+                            <button class="btn btn-edit demo-btn" 
+                                    title="Edit (Demo)" 
+                                    onclick="showDemoMessage('edit', '{{ contact[1] }}')">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button class="btn btn-delete demo-btn" 
+                                    title="Delete (Demo)"
+                                    onclick="showDemoMessage('delete', '{{ contact[1] }}')">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- Try Real Operations -->
+<section class="try-real-section">
+    <div class="try-real-container">
+        <h3><i class="fas fa-rocket"></i> Ready to Try Real Operations?</h3>
+        <p>This demo shows sample data. To test actual CRUD operations with database:</p>
+
+        <div class="action-options">
+            <a href="{{ url_for('index') }}" class="btn btn-primary">
+                <i class="fas fa-home"></i> Go to Main App
+            </a>
+            <a href="{{ url_for('populate_sample_data') }}" class="btn btn-success">
+                <i class="fas fa-magic"></i> Add Sample Data to Database
+            </a>
+        </div>
+    </div>
+</section>
+
+<!-- Demo Add Form (Non-functional, for display) -->
+<section class="add-contact-section demo-form-section" id="demo-add-contact">
+    <div class="section-header">
+        <h3><i class="fas fa-plus-circle"></i> Add New Contact (Demo Form)</h3>
+    </div>
+
+    <div class="form-container">
+        <div class="demo-form-notice">
+            <i class="fas fa-info-circle"></i>
+            <strong>Demo Form:</strong> This form shows the interface. 
+            For working forms, visit the <a href="{{ url_for('index') }}">main application</a>.
+        </div>
+
+        <form class="contact-form demo-form" onsubmit="return showDemoMessage('add', 'Demo Contact')">
+            <p class="form-description">Fill in the details below to add a new contact</p>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="demo-name">
+                        <i class="fas fa-user"></i> Full Name <span class="required">*</span>
+                    </label>
+                    <input type="text" 
+                           id="demo-name" 
+                           name="name" 
+                           class="form-input" 
+                           placeholder="Enter full name"
+                           value="Demo User">
+                </div>
+
+                <div class="form-group">
+                    <label for="demo-email">
+                        <i class="fas fa-envelope"></i> Email Address <span class="required">*</span>
+                    </label>
+                    <input type="email" 
+                           id="demo-email" 
+                           name="email" 
+                           class="form-input" 
+                           placeholder="Enter email address"
+                           value="demo@example.com">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="demo-message">
+                    <i class="fas fa-comment"></i> Message <span class="required">*</span>
+                </label>
+                <textarea id="demo-message" 
+                         name="message" 
+                         class="form-textarea" 
+                         placeholder="Enter your message..."
+                         rows="4">This is a demo message showing how the form works.</textarea>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Contact (Demo)
+                </button>
+                <button type="reset" class="btn btn-secondary">
+                    <i class="fas fa-undo"></i> Clear Form
+                </button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<!-- Demo JavaScript -->
+<script>
+function showDemoMessage(action, name) {
+    let message = '';
+    switch(action) {
+        case 'add':
+            message = `Demo: Contact "${name}" would be added to the database. Visit the main app for real functionality!`;
+            break;
+        case 'edit':
+            message = `Demo: Contact "${name}" would be edited. Visit the main app to try real editing!`;
+            break;
+        case 'delete':
+            message = `Demo: Contact "${name}" would be deleted. Visit the main app for real deletion!`;
+            break;
+    }
+
+    alert(message);
+    return false; // Prevent form submission
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('📝 Demo Page Loaded');
+    console.log('✅ All CRUD operations are working in the main app');
+    console.log('🔗 Visit /index for real functionality');
+});
+</script>
+{% endblock %}

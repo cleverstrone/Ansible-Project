@@ -1,0 +1,41 @@
+- name: Install Docker using official script
+  become: true
+  ansible.builtin.shell: |
+    curl -fsSL https://get.docker.com -o get-docker.sh
+    sh get-docker.sh
+  args:
+    creates: /usr/bin/docker
+
+- name: Ensure Docker service is running and enabled
+  become: true
+  ansible.builtin.service:
+    name: docker
+    state: started
+    enabled: true
+
+- name: Inject 'requests' into pipx ansible-core env
+  become: true
+  ansible.builtin.shell: |
+    pipx inject ansible-core requests
+  args:
+    executable: /bin/bash
+
+- name: Ensure Python 'requests' module is installed
+  become: true
+  ansible.builtin.pip:
+    name: requests
+    executable: pip3
+
+- name: Log in to GitHub Container Registry
+  community.docker.docker_login:
+    registry_url: ghcr.io
+    username: "{{ github_username }}"
+    password: "{{ github_token }}"
+
+- name: Build and push Docker image
+  community.docker.docker_image:
+    name: "{{ image_name }}"
+    source: build
+    build:
+      path: "{{ lookup('env', 'GITHUB_WORKSPACE') }}"
+    push: true

@@ -1,0 +1,10 @@
+# Path where the Docker Compose project will reside
+app_path: /opt/flask-app
+
+# Path where docker-compose.yml and related files are copied to and executed from
+docker_compose_path: "{{ app_path }}"
+github_username: "{{ lookup('env', 'GH_USERNAME') | default('your_user_here') }}"
+github_token: "{{ lookup('env', 'GH_TOKEN') | default('your_token_here') }}"
+
+# Full GHCR image name with tag
+ghcr_image: "ghcr.io/{{ github_username }}/ghcr-repository/flask-app:latest"
