@@ -1,0 +1,111 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+    - main
+
+jobs:
+  deploy-test:
+    name: Deploy to Test Environment
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # - name: Set up Python
+    #   uses: actions/setup-python@v4
+    #   with:
+    #     python-version: 3.10
+
+    # - name: Install Ansible and Docker SDK
+    #   run: pip install ansible docker
+
+    - name: Set up SSH key
+      run: |
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/id_rsa
+        chmod 600 /tmp/id_rsa
+        eval "$(ssh-agent -s)"
+        ssh-add /tmp/id_rsa
+        chmod 600 /tmp/id_rsa
+
+    - name: Generate test inventory
+      env:
+        TEST_SERVER_IP: ${{ secrets.TEST_SERVER_IP }}
+        TEST_SSH_USER: ${{ secrets.TEST_SSH_USER }}
+      run: |
+        cat <<EOF > Ansible/inventory/test
+        [test]
+        test-server ansible_host=${{ secrets.TEST_SERVER_IP }} ansible_user=${{ secrets.TEST_SSH_USER }} ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+        EOF
+
+    - name: Build & Deploy to Test
+      env:
+        GH_USERNAME: ${{ secrets.GH_USERNAME }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_PORT: ${{ secrets.DB_PORT }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      run: |
+        ansible-playbook Ansible/site.yml -i Ansible/inventory/test \
+          --extra-vars "env_group=test" --private-key /tmp/id_rsa
+
+  approve-prod:
+    name: Deploy to Production
+    needs: deploy-test
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Wait for manual approval
+      uses: trstringer/manual-approval@v1
+      with:
+        secret: ${{ secrets.GITHUB_TOKEN }}
+        approvers: cleverstrone
+
+  deploy-prod:
+    name: Deploy to Production
+    needs: approve-prod
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # - name: Set up Python
+    #   uses: actions/setup-python@v4
+    #   with:
+    #     python-version: 3.10
+
+    - name: Set up SSH key
+      run: |
+        echo "${{ secrets.SSH_PRIVATE_KEY }}" > /tmp/id_rsa
+        chmod 600 /tmp/id_rsa
+        eval "$(ssh-agent -s)"
+        ssh-add /tmp/id_rsa
+        chmod 600 /tmp/id_rsa
+
+    - name: Generate prod inventory
+      env:
+        TEST_SERVER_IP: ${{ secrets.PROD_SERVER_IP }}
+        TEST_SSH_USER: ${{ secrets.PROD_SSH_USER }}
+      run: |
+        cat <<EOF > Ansible/inventory/prod
+        [prod]
+        prod-server ansible_host=${{ secrets.PROD_SERVER_IP }} ansible_user=${{ secrets.PROD_SSH_USER }} ansible_ssh_common_args='-o StrictHostKeyChecking=no'
+        EOF
+
+    - name: Build & Deploy to Prod
+      env:
+        GH_USERNAME: ${{ secrets.GH_USERNAME }}
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GH_TOKEN: ${{ secrets.GH_TOKEN }}
+        DB_HOST: ${{ secrets.DB_HOST }}
+        DB_PORT: ${{ secrets.DB_PORT }}
+        DB_NAME: ${{ secrets.DB_NAME }}
+        DB_USER: ${{ secrets.DB_USER }}
+        DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+      run: |
+        ansible-playbook Ansible/site.yml -i Ansible/inventory/prod \
+          --extra-vars "env_group=prod" --private-key /tmp/id_rsa
