@@ -1,0 +1,62 @@
+name: CI - Flask App
+
+on:
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      FLASK_ENV: testing
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        cd Application-code
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov
+
+    - name: Run unit tests with coverage
+      run: |
+        pytest --cov=. --cov-report=xml --junitxml=reports/test-results.xml
+
+    - name: Archive test results
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-results
+        path: reports/test-results.xml
+
+    - name: Archive coverage report
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: coverage-report
+        path: coverage.xml
+
+    - name: Docker build check
+      run: docker build -t my-flask-app .
+
+    # Optional: Run container and test HTTP endpoint
+    - name: Run container
+      run: docker run -d -p 5000:5000 --name test-container my-flask-app
+
+    - name: Wait for app to be ready
+      run: sleep 5 # adjust if app startup is longer
+
+    - name: Test HTTP response
+      run: curl --fail http://localhost:5000 || (docker logs test-container && exit 1)
+
+    - name: Cleanup
+      run: docker stop test-container && docker rm test-container
